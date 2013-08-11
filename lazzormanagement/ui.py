@@ -47,29 +47,33 @@ class UI:
         else:
             return self.LEFT
 
-
-    def choose_user(self, users):
+    def choose_option(self, optionname, options):
         if not simulation:
             self._lcd.clear()
-            self._lcd.message("Choose User:")
-            usernames = users.keys()
-            userindex = 0
+            self._lcd.message(optionname)
+            index = 0
             while True:
                 self._lcd.setCursor(0,1)
-                user = usernames[userindex]
-                self._lcd.message(self._fill_line(user))
+                option = options[index]
+                self._lcd.message(self._fill_line(option))
                 button = self._wait_for_button()
 
                 if button == self.RIGHT:
-                    userindex += 1
+                    index += 1
                 elif button == self.LEFT:
-                    userindex -= 1
+                    index -= 1
                 elif button == self.SELECT:
-                    return users[user]
+                    return option
 
-                userindex = userindex % len(usernames)
+                index = index % len(options)
         else:
-            return users.values()[0]
+            return options[0]
+
+
+    def choose_user(self, users):
+        usernames = users.keys()
+        username = self.choose_option("Choose user:", usernames)
+        return users[username]
 
     def get_passcode(self, username):
         if not simulation:
