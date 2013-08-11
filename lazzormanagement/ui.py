@@ -111,4 +111,5 @@ class UI:
         if not simulation:
             self._lcd.clear()
             self._lcd.message(username+":\nAccount inactive")
+            self._wait_for_button()
 
