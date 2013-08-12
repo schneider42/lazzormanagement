@@ -23,4 +23,8 @@ while True:
             ui.notify_inactive_user(user.username)
         else:
             break
-    
+
+    options = ["Activate Laser", "Logout", "Change Passcode"]
+    option = ui.choose_option("Action:", options)
+    if option == "Logout":
+        continue
