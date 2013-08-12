@@ -79,6 +79,7 @@ class LazzorManager(object):
 
             self._ui.active_screen()
 
+            self._lazzor.lock_laser()
             while self._token_reader.medium_valid:
                 if total_on_time > paid_time:
                     self._logger.info("Getting more money")
@@ -89,7 +90,6 @@ class LazzorManager(object):
                     except nupay.NotEnoughCreditError:
                         self._logger.warning("Not enough credit available")
                         break
-                #if not self._lazzor.is_laser_unlocked and self._lazzor.is_switch_turned_on:
                 if not self._lazzor.is_laser_unlocked and self._ui.is_turn_on_key_pressed:
                     self._logger.info("Laser is locked, user wants to turn it on")
                     self._lazzor.unlock_laser()
@@ -99,7 +99,6 @@ class LazzorManager(object):
                 if self._lazzor.is_laser_unlocked:
                     now_on_time = time.time() - turn_on_timestamp
 
-                #if self._lazzor.is_laser_unlocked and self._lazzor.is_switch_turned_on():
                 if self._lazzor.is_laser_unlocked and self._ui.is_turn_off_key_pressed:
                     self._logger.info("Laser is unlocked, user wants to turn it off")
                     self._lazzor.lock_laser()
@@ -109,8 +108,11 @@ class LazzorManager(object):
                 time.sleep(.1)
                 total_on_time = now_on_time + prev_on_time
                 self._ui.update_active_screen(now_on_time, total_on_time, sub_total, session.total, session.credit)
+        
+            if not self._token_reader.medium_valid:
+                self._logger.warning("Token medium vanished. Aborting.")
+            self._lazzor.lock_laser()
 
-        #self._logger.info("Waiting for medium to vanish")
     def _change_passcode(self, user):
         pass
 
