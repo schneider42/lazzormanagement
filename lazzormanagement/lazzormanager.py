@@ -6,6 +6,7 @@ from ui import UI
 from usermanager import UserManager
 from lazzor import Lazzor
 import nupay
+from decimal import Decimal
 
 class LazzorManager(object):
     def __init__(self, config):
@@ -73,31 +74,41 @@ class LazzorManager(object):
 
             paid_time = 0
             turn_on_timestamp = 0
-            #minute_cost = Decimal(0.5)
-            
-            #self._ui.active_screen()
+            minute_cost = Decimal(0.5)
+            sub_total = Decimal(0)
 
-            #while self._token_reader.medium_valid:
-            #    if total_on_time > paid_time:
-            #        try:
-            #            session.cash(price)
-            #            paid_time += 60
-            #        except nupay.NotEnoughCreditError:
-            #            break
-            #    if not self._lazzor.is_laser_unlocked and self._lazzor.is_switch_turned_on():
-            #        self._lazzor.unlock_laser()
-            #        turn_on_timestamp = time.time()
+            self._ui.active_screen()
 
-            #    if self._lazzor.is_laser_unlocked:
-            #        now_on_time = time.time() - turn_on_timestamp
+            while self._token_reader.medium_valid:
+                if total_on_time > paid_time:
+                    self._logger.info("Getting more money")
+                    try:
+                        session.cash(minute_cost)
+                        sub_total += minute_cost
+                        paid_time += 60
+                    except nupay.NotEnoughCreditError:
+                        self._logger.warning("Not enough credit available")
+                        break
+                #if not self._lazzor.is_laser_unlocked and self._lazzor.is_switch_turned_on:
+                if not self._lazzor.is_laser_unlocked and self._ui.is_turn_on_key_pressed:
+                    self._logger.info("Laser is locked, user wants to turn it on")
+                    self._lazzor.unlock_laser()
+                    turn_on_timestamp = time.time()
+                    sub_total = 0
 
-            #    if self._lazzor.is_laser_unlocked and self._lazzor.is_switch_turned_on():
-            #        self._lazzor.lock_laser()
-            #        prev_on_time += now_on_time
-            #        now_on_time = 0
+                if self._lazzor.is_laser_unlocked:
+                    now_on_time = time.time() - turn_on_timestamp
 
-            #    time.sleep(1)
-            #    total_on_time = now_on_time + prev_on_time
+                #if self._lazzor.is_laser_unlocked and self._lazzor.is_switch_turned_on():
+                if self._lazzor.is_laser_unlocked and self._ui.is_turn_off_key_pressed:
+                    self._logger.info("Laser is unlocked, user wants to turn it off")
+                    self._lazzor.lock_laser()
+                    prev_on_time += now_on_time
+                    now_on_time = 0
+
+                time.sleep(.1)
+                total_on_time = now_on_time + prev_on_time
+                self._ui.update_active_screen(now_on_time, total_on_time, sub_total, session.total, session.credit)
 
         #self._logger.info("Waiting for medium to vanish")
     def _change_passcode(self, user):

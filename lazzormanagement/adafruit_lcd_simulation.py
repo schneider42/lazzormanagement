@@ -21,6 +21,11 @@ class Adafruit_CharLCDPlate(object):
         self.Y = y
         pygame.init()
 
+        self._pressed = 0
+        self._color = (255, 255, 255)
+        self._fontsize = 16
+        self._font = pygame.font.SysFont("monospace", self._fontsize)
+
         self._screen = pygame.display.set_mode((x, y))
         self._screen.fill((0, 0, 0))
         pygame.display.set_caption(sys.argv[0])
@@ -28,11 +33,6 @@ class Adafruit_CharLCDPlate(object):
         self._updatethread = threading.Thread(target=self._handle_events)
         self._updatethread.setDaemon(True)
         self._updatethread.start()
-        self._pressed = 0
-        self._color = (255, 255, 255)
-        self._fontsize = 16
-        self._font = pygame.font.SysFont("monospace", self._fontsize)
-
     def _check_key(self, pressed, index, mask):
         if pressed[index]:
             self._pressed |= (1 << mask)

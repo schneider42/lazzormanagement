@@ -133,10 +133,57 @@ class UI:
         self._lcd.clear()
         self._lcd.message("Please insert\nUSB drive.")
  
-#    def active_screen(self):
-#       self._lcd.clear()
-#       self._lcd.message
+    def active_screen(self):
+        self._active_t0 = 0
+        self._active_state = 0
+        self._last_ui_element = None
 
+    def update_active_screen(self, now_on_time, total_on_time, sub_total, total, credit):
+        now_on_time = int(now_on_time)
+        total_on_time = int(total_on_time)
+
+        def format_as_time(seconds):
+            minutes = int(seconds / 60)
+            seconds = seconds % 60
+            return "%d:%02d"%(minutes, seconds)
+        
+        def check_update_needed(ui_element):
+            if self._last_ui_element != ui_element:
+                self._last_ui_element = ui_element
+                self._lcd.clear()
+                return True
+            return False
+
+        if time.time() - self._active_t0 > 5:
+            self._active_state += 1
+            self._active_state %= 5
+            self._active_t0 = time.time()
+            self._last_ui_element = None
+
+        if self._active_state == 0:
+            if check_update_needed(now_on_time):
+                self._lcd.message("On Time:\n" + format_as_time(now_on_time))
+        elif self._active_state == 1:
+            if check_update_needed(total_on_time):
+                self._lcd.message("Total On Time:\n" + format_as_time(total_on_time))
+        elif self._active_state == 2:
+            if check_update_needed(sub_total):
+                self._lcd.message("Sub Total:\n%.02f Eur" % sub_total)
+        elif self._active_state == 3:
+            if check_update_needed(total):
+                self._lcd.message("Total:\n%.02f Eur" % total)
+        elif self._active_state == 4:
+            if check_update_needed(credit):
+                self._lcd.message("Credit Left:\n%.02f Eur" % credit)
+
+    @property
+    def is_turn_on_key_pressed(self):
+        return (self._lcd.buttons() & (1 << self._lcd.UP) > 0)
+ 
+    @property
+    def is_turn_off_key_pressed(self):
+        return (self._lcd.buttons() & (1 << self._lcd.DOWN)) > 0
+       
 #1234567890123456
 #12:30 24:23
 #05.50 17.00 99.

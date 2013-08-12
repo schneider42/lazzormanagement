@@ -42,7 +42,7 @@ class Lazzor:
     
     @property
     def is_laser_unlocked(self):
-        if not self._simulation:
+        if not simulation:
             return self._io.output_pins[LASER_UNLOCK_PIN].value == 1
         else:
             return self._laser_unlocked
