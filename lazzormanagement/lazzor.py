@@ -6,6 +6,8 @@ except ImportError:
     simulation = True
 
 import logging
+import threading
+import time
 
 LASER_UNLOCK_PIN = 0
 LASER_SWITCH_PIN = 0
@@ -18,6 +20,20 @@ class Lazzor:
             pifacedigitalio.init()
             self._io = pifacedigitalio.PiFaceDigital()
         self.lock_laser()
+        
+        self._sound_alarm = False
+        self._alarmthread = threading.Thread(target=self._alarm_handler)
+        self._alarmthread.setDaemon(True)
+        self._alarmthread.start()
+
+    def _alarm_handler(self):
+        while True:
+            if not simulation:
+                if self._sound_alarm == True:
+                    self._io.output_pins[ALARM_PIN].toggle()
+                else:
+                    self._io.output_pins[ALARM_PIN].turn_off()
+            time.sleep(1)
 
     def lock_laser(self):
         self._logger.info("Locking the laser")
@@ -46,3 +62,12 @@ class Lazzor:
             return self._io.output_pins[LASER_UNLOCK_PIN].value == 1
         else:
             return self._laser_unlocked
+
+    def sound_alarm_tone(self):
+        self._logger.info("Sounding the alarm")
+        self._sound_alarm = True
+
+    def silence_alarm_tone(self):
+        self._logger.info("Silencing the alarm")
+        self._sound_alarm = False
+
