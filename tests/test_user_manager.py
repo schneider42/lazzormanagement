@@ -27,11 +27,7 @@ class UserManagerTest(unittest.TestCase):
         with io.open(self.users_config_path, 'wb') as f:
             self.users_config.write(f)
 
-        config = ConfigParser.RawConfigParser()
-        config.add_section("Users")
-        config.set("Users", "users_file", self.users_config_path)
- 
-        self.user_manager = usermanager.UserManager(config)
+        self.user_manager = usermanager.UserManager(self.users_config_path)
 
     def tearDown(self):
         os.remove(self.users_config_path)

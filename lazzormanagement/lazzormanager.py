@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import time
 import logging
+import ConfigParser
+import os
 
 from ui import UI
 from usermanager import UserManager
@@ -9,10 +11,16 @@ import nupay
 from decimal import Decimal
 
 class LazzorManager(object):
-    def __init__(self, config):
+    def __init__(self, config_file_path):
+        config = ConfigParser.RawConfigParser()
+        config.read(config_file_path)
+
         self._logger = logging.getLogger(__name__)
         self._ui = UI("lazzormanagement\nbooting...")
-        self._user_manager = UserManager(config)
+
+        user_config_file_path = os.path.dirname(config_file_path) + \
+                os.path.sep + config.get('Users', 'users_file')
+        self._user_manager = UserManager(user_config_file_path)
         self._lazzor = Lazzor()
  
         while True:

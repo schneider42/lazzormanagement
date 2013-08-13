@@ -41,12 +41,12 @@ class User(object):
 
 
 class UserManager(object):
-    def __init__(self, config):
+    def __init__(self, users_config_file_path):
         self._logger = logging.getLogger(__name__)
-        self._users_config_path = config.get('Users', 'users_file')
+        self._users_config_file_path = users_config_file_path
         
         users_config = ConfigParser.RawConfigParser()
-        users_config.read(self._users_config_path)
+        users_config.read(self._users_config_file_path)
         
         self._users = {}
         for name in users_config.sections():

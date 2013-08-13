@@ -5,11 +5,8 @@ import logging
 import sys
 
 logging.basicConfig(level=logging.INFO)
-config = ConfigParser.RawConfigParser()
-config.read(sys.argv[1])
 
-
-manager = lazzormanagement.LazzorManager(config)
+manager = lazzormanagement.LazzorManager(sys.argv[1])
 manager.run()
 
 
