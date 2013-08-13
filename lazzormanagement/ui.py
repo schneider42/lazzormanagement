@@ -183,7 +183,11 @@ class UI:
     @property
     def is_turn_off_key_pressed(self):
         return (self._lcd.buttons() & (1 << self._lcd.DOWN)) > 0
-       
+
+    def warning_database_connection(self):
+        self._lcd.clear()
+        self._lcd.message("Payment Database\nNot Responding")
+
 #1234567890123456
 #12:30 24:23
 #05.50 17.00 99.

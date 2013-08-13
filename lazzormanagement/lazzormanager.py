@@ -27,8 +27,9 @@ class LazzorManager(object):
             try:
                 self._upay_session_manager = nupay.SessionManager(config)
                 break
-            except:
-                continue
+            except nupay.SessionConnectionError as e:
+                self._ui.warning_database_connection()
+                time.sleep(5)
 
         self._token_reader = nupay.USBTokenReader()
 
