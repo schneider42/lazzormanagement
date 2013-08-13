@@ -21,7 +21,8 @@ class Adafruit_CharLCDPlate(object):
         self.Y = y
         pygame.init()
 
-        self._pressed = 0
+        self._pressed_buttons = 0
+        self._pressed_buttons_lock = threading.Lock()
         self._color = (255, 255, 255)
         self._fontsize = 16
         self._font = pygame.font.SysFont("monospace", self._fontsize)
@@ -34,10 +35,11 @@ class Adafruit_CharLCDPlate(object):
         self._updatethread.setDaemon(True)
         self._updatethread.start()
     def _check_key(self, pressed, index, mask):
-        if pressed[index]:
-            self._pressed |= (1 << mask)
-        else:
-            self._pressed &= ~(1 << mask)
+        with self._pressed_buttons_lock:
+            if pressed[index]:
+                self._pressed_buttons |= (1 << mask)
+            else:
+                self._pressed_buttons &= ~(1 << mask)
 
     def _handle_events(self):
         while 1:
@@ -55,7 +57,8 @@ class Adafruit_CharLCDPlate(object):
                 os.kill(os.getpid(), 9)
 
     def buttons(self):
-        return self._pressed
+        with self._pressed_buttons_lock:
+            return self._pressed_buttons
 
     def update(self):
         surf = pygame.Surface((xsize,ysize))
