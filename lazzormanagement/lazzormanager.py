@@ -143,7 +143,7 @@ class LazzorManager(object):
 
             time.sleep(.1)
             total_on_time = now_on_time + prev_on_time
-            self._ui.update_active_screen(now_on_time, total_on_time, sub_total, session.total, session.credit)
+            self._ui.update_active_screen(now_on_time, total_on_time, sub_total, session.total, session.credit, self._lazzor.is_laser_unlocked)
     
         if not self._token_reader.medium_valid:
             self._logger.warning("Token medium vanished. Aborting.")
