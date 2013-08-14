@@ -28,8 +28,14 @@ class LazzorManager(object):
                 self._upay_session_manager = nupay.SessionManager(config)
                 break
             except nupay.SessionConnectionError as e:
-                self._ui.warning_database_connection()
-                time.sleep(5)
+                self._logger.warning("Can not reach the database")
+                self._ui.warning_database_connection(timeout = 5)
+            except nupay.TimeoutError as e:
+                self._logger.warning("Timeout while connection to the database")
+                self._ui.warning_database_connection(timeout = 5)
+
+            self._ui.notify_try_again()
+
 
         self._token_reader = nupay.USBTokenReader()
 
@@ -70,57 +76,77 @@ class LazzorManager(object):
 
         self._logger.info("Read %d tokens"%len(tokens))
         self._ui.notify_credit()
-
-        with self._upay_session_manager.create_session() as session:
-            session.validate_tokens(tokens, ui_update)
-            self._ui.update_credit(session.credit)
-            self._logger.info("Balance is %.02f Eur" % session.credit)
-            self._ui.wait_for_ok()
-
-            total_on_time = 0
-            now_on_time = 0
-            prev_on_time = 0
-
-            paid_time = 0
-            turn_on_timestamp = 0
-            minute_cost = Decimal(0.5)
-            sub_total = Decimal(0)
-
-            self._ui.active_screen()
-
-            self._lazzor.lock_laser()
-            while self._token_reader.medium_valid:
-                if total_on_time > paid_time:
-                    self._logger.info("Getting more money")
-                    try:
-                        session.cash(minute_cost)
-                        sub_total += minute_cost
-                        paid_time += 60
-                    except nupay.NotEnoughCreditError:
-                        self._logger.warning("Not enough credit available")
-                        break
-                if not self._lazzor.is_laser_unlocked and self._ui.is_turn_on_key_pressed:
-                    self._logger.info("Laser is locked, user wants to turn it on")
-                    self._lazzor.unlock_laser()
-                    turn_on_timestamp = time.time()
-                    sub_total = 0
-
-                if self._lazzor.is_laser_unlocked:
-                    now_on_time = time.time() - turn_on_timestamp
-
-                if self._lazzor.is_laser_unlocked and self._ui.is_turn_off_key_pressed:
-                    self._logger.info("Laser is unlocked, user wants to turn it off")
-                    self._lazzor.lock_laser()
-                    prev_on_time += now_on_time
-                    now_on_time = 0
-
-                time.sleep(.1)
-                total_on_time = now_on_time + prev_on_time
-                self._ui.update_active_screen(now_on_time, total_on_time, sub_total, session.total, session.credit)
+        try:
+            with self._upay_session_manager.create_session() as session:
+                session.validate_tokens(tokens, ui_update)
+                self._ui.update_credit(session.credit)
+                self._logger.info("Balance is %.02f Eur" % session.credit)
+                self._ui.wait_for_ok()
+                self._run_payment_loop(session)
         
-            if not self._token_reader.medium_valid:
-                self._logger.warning("Token medium vanished. Aborting.")
-            self._lazzor.lock_laser()
+        except nupay.SessionConnectionError as e:
+            self._logger.warning("Databse connection could not be estalished")
+            self._ui.warning_database_connection(timeout = 5)
+        except nupay.TimeoutError:
+            self._logger.warning("Databse connection timed out")
+            self._ui.warning_database_connection(timeout = 5)
+
+        self._lazzor.lock_laser()
+
+    def _run_payment_loop(self, session):
+        total_on_time = 0
+        now_on_time = 0
+        prev_on_time = 0
+
+        paid_time = 0
+        turn_on_timestamp = 0
+        minute_cost = Decimal(0.5)
+        sub_total = Decimal(0)
+
+        self._ui.active_screen()
+
+        self._lazzor.lock_laser()
+        while self._token_reader.medium_valid:
+            if total_on_time > paid_time:
+                self._logger.info("Getting more money")
+                try:
+                    session.cash(minute_cost)
+                    sub_total += minute_cost
+                    paid_time += 60
+                except nupay.NotEnoughCreditError:
+                    self._lazzor.sound_alarm_tone()
+                    self._logger.warning("Not enough credit available")
+                    self._ui.warning_low_credit(timeout = 30)
+                    self._lazzor.silence_alarm_tone()
+                    break
+                except nupay.TimeoutError:
+                    self._logger.warning("Databse connection timed out")
+                    self._lazzor.sound_alarm_tone()
+                    self._ui.warning_database_connection(timeout = 30)
+                    self._lazzor.silence_alarm_tone()
+                    break
+
+            if not self._lazzor.is_laser_unlocked and self._ui.is_turn_on_key_pressed:
+                self._logger.info("Laser is locked, user wants to turn it on")
+                self._lazzor.unlock_laser()
+                turn_on_timestamp = time.time()
+                sub_total = 0
+
+            if self._lazzor.is_laser_unlocked:
+                now_on_time = time.time() - turn_on_timestamp
+
+            if self._lazzor.is_laser_unlocked and self._ui.is_turn_off_key_pressed:
+                self._logger.info("Laser is unlocked, user wants to turn it off")
+                self._lazzor.lock_laser()
+                prev_on_time += now_on_time
+                now_on_time = 0
+
+            time.sleep(.1)
+            total_on_time = now_on_time + prev_on_time
+            self._ui.update_active_screen(now_on_time, total_on_time, sub_total, session.total, session.credit)
+    
+        if not self._token_reader.medium_valid:
+            self._logger.warning("Token medium vanished. Aborting.")
 
     def _change_passcode(self, user):
         pass

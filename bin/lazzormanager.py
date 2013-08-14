@@ -3,8 +3,8 @@ import lazzormanagement
 import ConfigParser
 import logging
 import sys
-
-logging.basicConfig(level=logging.INFO)
+FORMAT = '%(asctime)-15s %(message)s'
+logging.basicConfig(level = logging.DEBUG, format = FORMAT)
 
 manager = lazzormanagement.LazzorManager(sys.argv[1])
 manager.run()

@@ -178,16 +178,44 @@ class UI:
 
     @property
     def is_turn_on_key_pressed(self):
-        return (self._lcd.buttons() & (1 << self._lcd.UP) > 0)
+        return (self._lcd.buttons() & (1 << self._lcd.UP)) > 0
  
     @property
     def is_turn_off_key_pressed(self):
         return (self._lcd.buttons() & (1 << self._lcd.DOWN)) > 0
 
-    def warning_database_connection(self):
-        self._lcd.clear()
-        self._lcd.message("Payment Database\nNot Responding")
+    def warning_low_credit(self, timeout):
+        self._display_with_timer(["Low Credit!"], timeout)
 
+    def warning_database_connection(self, timeout):
+        self._display_with_timer(["Payment Database", "Not Responding"], timeout)
+
+    def _display_with_timer(self, messages, timeout):
+        def rotate(l,n):
+            return l[n:] + l[:n]
+        
+        t0 = time.time()
+        
+        while True:
+            self._lcd.clear()
+            #self._lcd.message("Payment Database\nNot Responding")
+            self._lcd.message(messages[0])
+            messages = rotate(messages, 1)
+            
+            if timeout == 0:
+                self.wait_for_ok()
+                break
+            
+            if time.time() - t0 > timeout:
+                break
+            
+            self._lcd.message("\n%d"%(timeout-int(time.time() - t0)))
+            time.sleep(1)
+
+    def notify_try_again(self):
+        self._lcd.clear()
+        self._lcd.message("Trying Again\n...")
+        
 #1234567890123456
 #12:30 24:23
 #05.50 17.00 99.

@@ -98,10 +98,10 @@ class Adafruit_CharLCDPlate(object):
         self._show()
  
     def _show(self):
-        #print('+' + '-' * self._cols + '+')
-        #for row in self._data:
-        #    print('|' + ''.join(row) + '|')
-        #print('+' + '-' * self._cols + '+')
+        print('+' + '-' * self._cols + '+')
+        for row in self._data:
+            print('|' + ''.join(row) + '|')
+        print('+' + '-' * self._cols + '+')
         index = 0
         self._screen.fill((0, 0, 0))
         for row in self._data:
