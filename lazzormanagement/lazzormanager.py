@@ -82,7 +82,8 @@ class LazzorManager(object):
                 self._ui.update_credit(session.credit)
                 self._logger.info("Balance is %.02f Eur" % session.credit)
                 self._ui.wait_for_ok()
-                self._run_payment_loop(session)
+                if session.credit > 0:
+                    self._run_payment_loop(session)
         
         except nupay.SessionConnectionError as e:
             self._logger.warning("Databse connection could not be estalished")
