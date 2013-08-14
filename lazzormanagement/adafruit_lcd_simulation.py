@@ -48,7 +48,14 @@ class Adafruit_CharLCDPlate(object):
         self._updatethread.start()
 
     def backlight(self, color):
-        pass
+        if color == self.RED:
+            self._color = (255, 0, 0)
+        if color == self.GREEN:
+            self._color = (0, 255, 0)
+        if color == self.BLUE:
+            self._color = (0, 0, 255)
+        if color == self.WHITE:
+            self._color = (255, 255, 255)
 
     def _check_key(self, pressed, index, mask):
         with self._pressed_buttons_lock:
