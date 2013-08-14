@@ -59,6 +59,7 @@ class UI:
             pass
 
     def choose_option(self, optionname, options):
+        self._lcd.backlight(self._lcd.WHITE)
         self._logger.info("Waiting for option %s: %s", optionname, str(options))
         self._lcd.clear()
         self._lcd.message(optionname)
@@ -81,12 +82,14 @@ class UI:
 
 
     def choose_user(self, users):
+        self._lcd.backlight(self._lcd.WHITE)
         usernames = users.keys()
         self._logger.debug("Waiting for username selection")
         username = self.choose_option("Choose user:", usernames)
         return users[username]
 
     def get_passcode(self, username):
+        self._lcd.backlight(self._lcd.WHITE)
         self._logger.debug("Waiting for passcode")
         passcode = ''
         self._lcd.clear()
@@ -106,6 +109,7 @@ class UI:
                 return passcode
 
     def notify_bad_passcode(self, timeout):
+        self._lcd.backlight(self._lcd.RED)
         self._logger.info("Notifying bad passcode. Timeout=%d s", timeout)
         self._lcd.clear()
         self._lcd.message("Bad Passcode")
@@ -116,20 +120,24 @@ class UI:
             timeout-=1
 
     def notify_inactive_user(self, username):
+        self._lcd.backlight(self._lcd.RED)
         self._logger.info("Notifying inactive user")
         self._lcd.clear()
         self._lcd.message(username+":\nAccount inactive")
         self._wait_for_button()
     
     def notify_credit(self):
+        self._lcd.backlight(self._lcd.WHITE)
         self._lcd.clear()
         self._lcd.message("Your credit:")
 
     def update_credit(self, credit):
+        self._lcd.backlight(self._lcd.WHITE)
         self._lcd.setCursor(0,1)
         self._lcd.message("%.02f Eur" % credit)
 
     def notify_waiting_for_usb(self):
+        self._lcd.backlight(self._lcd.WHITE)
         self._lcd.clear()
         self._lcd.message("Please insert\nUSB drive.")
  
@@ -138,7 +146,11 @@ class UI:
         self._active_state = 0
         self._last_ui_element = None
 
-    def update_active_screen(self, now_on_time, total_on_time, sub_total, total, credit):
+    def update_active_screen(self, now_on_time, total_on_time, sub_total, total, credit, laser_unlocked):
+        if laser_unlocked:
+            self._lcd.backlight(self._lcd.BLUE)
+        else:
+            self._lcd.backlight(self._lcd.GREEN)
         now_on_time = int(now_on_time)
         total_on_time = int(total_on_time)
 
@@ -185,9 +197,11 @@ class UI:
         return (self._lcd.buttons() & (1 << self._lcd.DOWN)) > 0
 
     def warning_low_credit(self, timeout):
+        self._lcd.backlight(self._lcd.RED)
         self._display_with_timer(["Low Credit!"], timeout)
 
     def warning_database_connection(self, timeout):
+        self._lcd.backlight(self._lcd.RED)
         self._display_with_timer(["Payment Database", "Not Responding"], timeout)
 
     def _display_with_timer(self, messages, timeout):
@@ -213,6 +227,7 @@ class UI:
             time.sleep(1)
 
     def notify_try_again(self):
+        self._lcd.backlight(self._lcd.WHITE)
         self._lcd.clear()
         self._lcd.message("Trying Again\n...")
         

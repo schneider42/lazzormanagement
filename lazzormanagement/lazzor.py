@@ -11,6 +11,7 @@ import time
 
 LASER_UNLOCK_PIN = 0
 LASER_SWITCH_PIN = 0
+ALARM_PIN = 1
 
 class Lazzor:
     def __init__(self):
