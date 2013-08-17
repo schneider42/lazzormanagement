@@ -91,22 +91,22 @@ class LazzorManager(object):
         except nupay.TimeoutError:
             self._logger.warning("Databse connection timed out")
             self._ui.warning_database_connection(timeout = 5)
-
-        self._lazzor.lock_laser()
+        finally:
+            self._lazzor.lock_laser()
 
     def _run_payment_loop(self, session):
         total_on_time = 0
-        now_on_time = 0
         prev_on_time = 0
 
         paid_time = 0
-        turn_on_timestamp = 0
         minute_cost = Decimal(0.5)
         sub_total = Decimal(0)
 
         self._ui.active_screen()
 
         self._lazzor.lock_laser()
+        self._lazzor.reset_consumption_timer()
+
         while self._token_reader.medium_valid:
             if total_on_time > paid_time:
                 self._logger.info("Getting more money")
@@ -130,21 +130,18 @@ class LazzorManager(object):
             if not self._lazzor.is_laser_unlocked and self._ui.is_turn_on_key_pressed:
                 self._logger.info("Laser is locked, user wants to turn it on")
                 self._lazzor.unlock_laser()
-                turn_on_timestamp = time.time()
                 sub_total = 0
-
-            if self._lazzor.is_laser_unlocked:
-                now_on_time = time.time() - turn_on_timestamp
 
             if self._lazzor.is_laser_unlocked and self._ui.is_turn_off_key_pressed:
                 self._logger.info("Laser is unlocked, user wants to turn it off")
                 self._lazzor.lock_laser()
-                prev_on_time += now_on_time
-                now_on_time = 0
+                prev_on_time += self._lazzor.get_consumption_timer()
+                self._lazzor.reset_consumption_timer()
 
             time.sleep(.1)
-            total_on_time = now_on_time + prev_on_time
-            self._ui.update_active_screen(now_on_time, total_on_time, sub_total, session.total, session.credit, self._lazzor.is_laser_unlocked)
+            total_on_time = self._lazzor.get_consumption_timer() + prev_on_time
+            self._ui.update_active_screen(self._lazzor.get_consumption_timer(), total_on_time,
+                    sub_total, session.total, session.credit, self._lazzor.is_laser_unlocked)
     
         if not self._token_reader.medium_valid:
             self._logger.warning("Token medium vanished. Aborting.")

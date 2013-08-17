@@ -27,6 +27,11 @@ class Lazzor:
         self._alarmthread.setDaemon(True)
         self._alarmthread.start()
 
+        self._consumption_timer = 0
+        self._consumptionthread = threading.Thread(target=self._consumption_handler)
+        self._consumptionthread.setDaemon(True)
+        self._consumptionthread.start()
+
     def _alarm_handler(self):
         while True:
             if not simulation:
@@ -35,6 +40,14 @@ class Lazzor:
                 else:
                     self._io.output_pins[ALARM_PIN].turn_off()
             time.sleep(1)
+
+    def _consumption_handler(self):
+        while True:
+            if not simulation:
+                pass
+            else:
+                self._consumption_timer += .1
+            time.sleep(.1)
 
     def lock_laser(self):
         self._logger.info("Locking the laser")
@@ -72,3 +85,8 @@ class Lazzor:
         self._logger.info("Silencing the alarm")
         self._sound_alarm = False
 
+    def reset_consumption_timer(self):
+        self._consumption_timer = 0
+
+    def get_consumption_timer(self):
+        return self._consumption_timer
