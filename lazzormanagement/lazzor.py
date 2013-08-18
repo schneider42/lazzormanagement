@@ -1,6 +1,7 @@
 try:
     import pifacedigitalio
     simulation = False
+    from pifacecommon.core import read, write, GPINTENB, GPINTENA, GPIOA, GPIOB, DEFVALB, INTCONB, IPOLB, INTFB, INTCAPB
 except ImportError:
     print(__name__ + ": Running in simulation mode")
     simulation = True
@@ -13,6 +14,7 @@ LASER_UNLOCK_PIN = 0
 LASER_SWITCH_PIN = 0
 ALARM_PIN = 1
 
+
 class Lazzor:
     def __init__(self):
         self._logger = logging.getLogger(__name__)
@@ -22,6 +24,13 @@ class Lazzor:
             self._io = pifacedigitalio.PiFaceDigital()
         self.lock_laser()
         
+        write(0x01, IPOLB)
+        write(0x01, GPINTENB)
+        write(0x00, DEFVALB)
+        write(0x01, INTCONB)
+        
+        self.reset_consumption_timer()
+
         self._sound_alarm = False
         self._alarmthread = threading.Thread(target=self._alarm_handler)
         self._alarmthread.setDaemon(True)
@@ -44,10 +53,28 @@ class Lazzor:
     def _consumption_handler(self):
         while True:
             if not simulation:
-                pass
+                if self.is_laser_unlocked:
+                    intfb = read(INTFB)
+                    read(GPIOB)
+
+                    if intfb != 0:
+                        if self._onstamp == 0:
+                            self._onstamp = time.time() - 0.1
+                    else:
+                        if self._onstamp != 0:
+                            self._ontime += time.time() - self._onstamp
+                            self._onstamp = 0
+                    
+                    if self._onstamp != 0:
+                        self._consumption_timer = self._ontime + time.time() - self._onstamp
+                    else:
+                        self._consumption_timer = self._ontime
+
             else:
                 self._consumption_timer += .1
             time.sleep(.1)
+        
+            
 
     def lock_laser(self):
         self._logger.info("Locking the laser")
@@ -87,6 +114,9 @@ class Lazzor:
 
     def reset_consumption_timer(self):
         self._consumption_timer = 0
+        self._ontime = 0
+        self._onstamp = 0
+
 
     def get_consumption_timer(self):
         return self._consumption_timer
