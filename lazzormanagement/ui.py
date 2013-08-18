@@ -196,6 +196,10 @@ class UI:
     def is_turn_off_key_pressed(self):
         return (self._lcd.buttons() & (1 << self._lcd.DOWN)) > 0
 
+    @property
+    def is_exit_key_pressed(self):
+        return (self._lcd.buttons() & (1 << self._lcd.LEFT)) > 0
+
     def warning_low_credit(self, timeout):
         self._lcd.backlight(self._lcd.RED)
         self._display_with_timer(["Low Credit!"], timeout)

@@ -137,6 +137,9 @@ class LazzorManager(object):
                 self._lazzor.lock_laser()
                 prev_on_time += self._lazzor.get_consumption_timer()
                 self._lazzor.reset_consumption_timer()
+            
+            if self._ui.is_exit_key_pressed:
+                break
 
             time.sleep(.1)
             total_on_time = self._lazzor.get_consumption_timer() + prev_on_time
