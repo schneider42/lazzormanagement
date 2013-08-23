@@ -22,12 +22,12 @@ class Lazzor:
         if not simulation:
             pifacedigitalio.init()
             self._io = pifacedigitalio.PiFaceDigital()
+            write(0x01, IPOLB)
+            write(0x01, GPINTENB)
+            write(0x00, DEFVALB)
+            write(0x01, INTCONB)
+
         self.lock_laser()
-        
-        write(0x01, IPOLB)
-        write(0x01, GPINTENB)
-        write(0x00, DEFVALB)
-        write(0x01, INTCONB)
         
         self.reset_consumption_timer()
 
@@ -74,8 +74,6 @@ class Lazzor:
                 self._consumption_timer += .1
             time.sleep(.1)
         
-            
-
     def lock_laser(self):
         self._logger.info("Locking the laser")
         if not simulation:
